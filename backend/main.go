@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"backend/config"
 	"backend/database"
 	"backend/models"
 	"backend/routes"
@@ -11,10 +12,19 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Koneksi ke Database
+	// 1. Muat file .env sekali di awal aplikasi
+	if err := godotenv.Load(); err != nil {
+		log.Println("Warning: .env file not found, using system environment variables")
+	}
+
+	// 2. Inisialisasi konfigurasi global
+	config.InitConfig()
+
+	// 3. Koneksi ke Database
 	database.Connect()
 
 	// Migrasi otomatis untuk memastikan tabel ada

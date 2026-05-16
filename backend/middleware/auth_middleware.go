@@ -1,42 +1,20 @@
 package middleware
 
 import (
+	"backend/config"
 	"backend/database"
 	"backend/models"
 	"crypto/sha256"
 	"encoding/hex"
-	"log"
 	"net/http"
-	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
 )
 
-var (
-	jwtKey []byte
-	once   sync.Once
-)
 
-func loadEnv() {
-	once.Do(func() {
-		// Load file .env (abaikan jika environment variable sudah diset dari sistem)
-		if err := godotenv.Load(); err != nil {
-			log.Println("Warning: .env file not found, using system environment variables")
-		}
-
-		secret := os.Getenv("JWT_SECRET")
-		if secret == "" {
-			log.Fatal("JWT_SECRET is not set")
-		}
-
-		jwtKey = []byte(secret)
-	})
-}
 
 type Claims struct {
 	Username string `json:"username"`
@@ -46,7 +24,6 @@ type Claims struct {
 
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		loadEnv()
 
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -67,7 +44,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		claims := &Claims{}
 
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			return jwtKey, nil
+			return config.JWTKey, nil
 		})
 
 		if err != nil || !token.Valid {

@@ -1,20 +1,17 @@
 package controllers
 
 import (
+	"backend/config"
 	"backend/database"
 	"backend/models"
 	"crypto/sha256"
 	"encoding/hex"
-	"log"
 	"net/http"
-	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -24,26 +21,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-var (
-	jwtKey []byte
-	once   sync.Once
-)
 
-func loadEnv() {
-	once.Do(func() {
-		// Load file .env (abaikan jika environment variable sudah diset dari sistem)
-		if err := godotenv.Load(); err != nil {
-			log.Println("Warning: .env file not found, using system environment variables")
-		}
-
-		secret := os.Getenv("JWT_SECRET")
-		if secret == "" {
-			log.Fatal("JWT_SECRET is not set")
-		}
-
-		jwtKey = []byte(secret)
-	})
-}
 
 func Register(c *gin.Context) {
 	var input struct {
@@ -112,7 +90,6 @@ func Register(c *gin.Context) {
 }
 
 func Login(c *gin.Context) {
-	loadEnv()
 
 	var input struct {
 		Username string `json:"username" binding:"required"`
@@ -149,7 +126,7 @@ func Login(c *gin.Context) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	tokenString, err := token.SignedString(jwtKey)
+	tokenString, err := token.SignedString(config.JWTKey)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
 		return
@@ -172,7 +149,6 @@ func Me(c *gin.Context) {
 }
 
 func Logout(c *gin.Context) {
-	loadEnv()
 
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
@@ -190,7 +166,7 @@ func Logout(c *gin.Context) {
 
 	claims := &Claims{}
 	parsedToken, _ := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
+		return config.JWTKey, nil
 	})
 
 	hash := sha256.Sum256([]byte(tokenString))
