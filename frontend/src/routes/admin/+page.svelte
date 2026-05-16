@@ -55,13 +55,18 @@
   let users = $state<User[]>([]);
   let logs = $state<ActivityLog[]>([]);
   let searchLog = $state("");
-  let filteredLogs = $derived(
-    logs.filter(
-      (log) =>
-        log.username.toLowerCase().includes(searchLog.toLowerCase()) ||
-        log.action.toLowerCase().includes(searchLog.toLowerCase()),
-    ),
-  );
+  let logsPage = $state(1);
+  let logsTotalPages = $state(1);
+
+  async function fetchLogs() {
+    try {
+      const res = await api.get<{ data: ActivityLog[], totalPages: number }>(`/api/admin/logs?page=${logsPage}&limit=25&search=${searchLog}`);
+      logs = res.data || [];
+      logsTotalPages = res.totalPages || 1;
+    } catch (e) {
+      console.error("Failed to fetch logs", e);
+    }
+  }
   let searchQuestion = $state("");
   let filteredQuestions = $derived(
     questions.filter(
@@ -146,13 +151,12 @@
         api.get<Question[]>("/api/questions"),
         api.get<ScoreEntry[]>("/api/admin/scores"),
         api.get<User[]>("/api/admin/users"),
-        api.get<ActivityLog[]>("/api/admin/logs"),
       ]);
+      await fetchLogs();
       if (results[0].status === "fulfilled") quizzes = results[0].value;
       if (results[1].status === "fulfilled") questions = results[1].value;
       if (results[2].status === "fulfilled") scores = results[2].value || [];
       if (results[3].status === "fulfilled") users = results[3].value || [];
-      if (results[4].status === "fulfilled") logs = results[4].value || [];
     } finally {
       loading = false;
       refreshing = false;
@@ -731,16 +735,17 @@
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-semibold text-white">Log Aktivitas</h2>
 
-          <div class="relative w-64">
+          <form class="relative w-64" onsubmit={(e) => { e.preventDefault(); logsPage = 1; fetchLogs(); }}>
             <input
               type="text"
               bind:value={searchLog}
-              placeholder="Cari log..."
+              placeholder="Cari log (Enter)..."
               class="w-full rounded-lg border border-slate-600 bg-slate-800 py-1.5 pl-3 pr-8 text-sm text-white placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
             {#if searchLog}
               <button
-                onclick={() => (searchLog = "")}
+                type="button"
+                onclick={() => { searchLog = ""; logsPage = 1; fetchLogs(); }}
                 class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
                 aria-label="Clear search"
               >
@@ -759,12 +764,10 @@
                 </svg>
               </button>
             {/if}
-          </div>
+          </form>
         </div>
 
         {#if logs.length === 0}
-          <p class="text-sm text-slate-500">Belum ada aktivitas.</p>
-        {:else if filteredLogs.length === 0}
           <p class="text-sm text-slate-500">Log tidak ditemukan.</p>
         {:else}
           <div
@@ -782,16 +785,17 @@
                 </tr>
               </thead>
               <tbody>
-                {#each filteredLogs as log}
+                {#each logs as log}
                   <tr class="border-b border-slate-700/50 last:border-0">
                     <td class="px-4 py-3 text-slate-400 whitespace-nowrap">
                       {new Date(log.timestamp).toLocaleDateString("id-ID", {
+                        timeZone: "Asia/Jakarta",
                         year: "numeric",
                         month: "short",
                         day: "numeric",
                         hour: "2-digit",
                         minute: "2-digit",
-                      })}
+                      })} WIB
                     </td>
                     <td class="px-4 py-3 text-slate-300 font-medium"
                       >{log.username}</td
@@ -823,6 +827,26 @@
                 {/each}
               </tbody>
             </table>
+          </div>
+          
+          <div class="flex items-center justify-between pt-2">
+            <span class="text-sm text-slate-400">Halaman {logsPage} dari {logsTotalPages}</span>
+            <div class="flex gap-2">
+              <button 
+                disabled={logsPage <= 1}
+                onclick={() => { logsPage--; fetchLogs(); }}
+                class="px-3 py-1 rounded border border-slate-600 text-sm text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition"
+              >
+                Sebelumnya
+              </button>
+              <button 
+                disabled={logsPage >= logsTotalPages}
+                onclick={() => { logsPage++; fetchLogs(); }}
+                class="px-3 py-1 rounded border border-slate-600 text-sm text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition"
+              >
+                Selanjutnya
+              </button>
+            </div>
           </div>
         {/if}
       </div>

@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +20,39 @@ type Claims struct {
 	Username string `json:"username"`
 	Role     string `json:"role"`
 	jwt.RegisteredClaims
+}
+
+type LoginAttempt struct {
+	Count        int
+	FirstAttempt time.Time
+	BlockedUntil time.Time
+}
+
+var (
+	loginAttempts = make(map[string]LoginAttempt)
+	loginMutex    sync.Mutex
+)
+
+func handleFailedLogin(username string) {
+	loginMutex.Lock()
+	defer loginMutex.Unlock()
+
+	attempt, exists := loginAttempts[username]
+	now := time.Now()
+
+	if !exists || now.Sub(attempt.FirstAttempt) > time.Minute {
+		// Reset atau mulai perhitungan baru
+		loginAttempts[username] = LoginAttempt{
+			Count:        1,
+			FirstAttempt: now,
+		}
+	} else {
+		attempt.Count++
+		if attempt.Count >= 3 {
+			attempt.BlockedUntil = now.Add(10 * time.Minute)
+		}
+		loginAttempts[username] = attempt
+	}
 }
 
 
@@ -101,17 +135,36 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// --- Cek Rate Limiter ---
+	loginMutex.Lock()
+	attempt, exists := loginAttempts[input.Username]
+	if exists && time.Now().Before(attempt.BlockedUntil) {
+		loginMutex.Unlock()
+		c.JSON(http.StatusTooManyRequests, gin.H{"error": "Akun diblokir sementara karena terlalu banyak percobaan gagal. Coba lagi dalam 10 menit."})
+		return
+	}
+	loginMutex.Unlock()
+	// ------------------------
+
 	var user models.User
 	if err := database.DB.Where("username = ?", input.Username).First(&user).Error; err != nil {
+		handleFailedLogin(input.Username)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 		return
 	}
 
 	// Compare password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
+		handleFailedLogin(input.Username)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 		return
 	}
+
+	// --- Reset Rate Limiter jika sukses ---
+	loginMutex.Lock()
+	delete(loginAttempts, input.Username)
+	loginMutex.Unlock()
+	// ---------------------------------------
 
 	// ⬇️ INI BAGIAN PENTING
 	expirationTime := time.Now().Add(24 * time.Hour)
