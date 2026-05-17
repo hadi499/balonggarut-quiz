@@ -43,10 +43,10 @@
   <title>Semua Kuis - Balonggarut Quiz</title>
 </svelte:head>
 
-<div class="min-h-[calc(100vh-4rem)] py-12">
+<div class="min-h-[calc(100vh-4rem)] py-8">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
     <!-- Search Bar -->
-    <div class="mb-6 max-w-2xl mx-auto mt-10">
+    <div class="mb-6 max-w-2xl mx-auto">
       <div class="relative w-full">
         <div
           class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4"
@@ -68,7 +68,7 @@
           type="text"
           bind:value={searchQuery}
           class="block w-full rounded-2xl border-0 bg-slate-800/80 py-3.5 pl-11 px-4 text-white ring-1 ring-inset ring-slate-700/50 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-500 shadow-sm backdrop-blur-sm transition-all text-base"
-          placeholder="Cari kuis berdasarkan nama atau kategori..."
+          placeholder="Cari kuis..."
         />
       </div>
     </div>
