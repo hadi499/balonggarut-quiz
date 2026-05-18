@@ -74,18 +74,20 @@
     </div>
 
     <!-- Category Filters -->
-    <div class="flex flex-wrap items-center justify-center gap-2 mb-12">
-      {#each categories as category}
-        <button
-          onclick={() => (selectedCategory = category)}
-          class="inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-semibold transition-all duration-200 border {selectedCategory ===
-          category
-            ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 shadow-sm shadow-indigo-500/10'
-            : 'bg-slate-800/40 text-slate-400 border-slate-700/50 hover:bg-slate-800 hover:text-slate-300 hover:border-slate-600'}"
-        >
-          {category}
-        </button>
-      {/each}
+    <div class="relative mb-12 -mx-6 px-6 sm:mx-0 sm:px-0">
+      <div class="flex overflow-x-auto gap-2 pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] sm:justify-center sm:flex-wrap">
+        {#each categories as category}
+          <button
+            onclick={() => (selectedCategory = category)}
+            class="whitespace-nowrap shrink-0 inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-semibold transition-all duration-200 border {selectedCategory ===
+            category
+              ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 shadow-sm shadow-indigo-500/10'
+              : 'bg-slate-800/40 text-slate-400 border-slate-700/50 hover:bg-slate-800 hover:text-slate-300 hover:border-slate-600'}"
+          >
+            {category}
+          </button>
+        {/each}
+      </div>
     </div>
 
     <!-- Quiz Grid -->
@@ -130,14 +132,10 @@
                 </span>
               </div>
               <h3
-                class="text-xl font-bold text-white group-hover:text-indigo-400 transition-colors mb-2"
+                class="text-xl font-bold text-white group-hover:text-indigo-400 transition-colors"
               >
                 {quiz.title}
               </h3>
-              <p class="text-sm text-slate-400 line-clamp-2">
-                Uji kemampuanmu dalam {quiz.category.toLowerCase()} dengan {quiz
-                  .questions?.length ?? 0} pertanyaan menantang.
-              </p>
             </div>
 
             <div
@@ -145,7 +143,7 @@
             >
               <div class="flex items-center gap-4">
                 <div
-                  class="flex items-center gap-1.5 text-xs font-medium text-slate-300"
+                  class="flex items-center gap-1.5 text-sm font-medium text-slate-300"
                 >
                   <svg
                     class="w-4 h-4 text-slate-500"
@@ -163,7 +161,7 @@
                   {quiz.questions?.length ?? 0} Soal
                 </div>
                 <div
-                  class="flex items-center gap-1.5 text-xs font-medium text-slate-300"
+                  class="flex items-center gap-1.5 text-sm font-medium text-slate-300"
                 >
                   <svg
                     class="w-4 h-4 text-slate-500"

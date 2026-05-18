@@ -159,7 +159,7 @@
         class="mt-2 inline-block rounded-lg bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 text-sm text-indigo-400"
         >{quiz.category}</span
       >
-      <div class="mt-4 space-y-2 text-slate-400">
+      <div class="mt-4 space-y-2 text-slate-300">
         <p>Waktu: {quiz.timeLimit} detik / soal</p>
         <p>Jumlah Soal: {quiz.questions.length}</p>
       </div>
