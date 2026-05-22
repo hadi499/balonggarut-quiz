@@ -18,6 +18,11 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
 
   const data = await res.json();
   if (!res.ok) {
+    // Jika token expired / tidak valid, logout otomatis di semua halaman
+    if (res.status === 401) {
+      const { auth } = await import("$lib/stores/auth.svelte");
+      auth.logout();
+    }
     throw new Error(data.error || "Something went wrong");
   }
   return data as T;

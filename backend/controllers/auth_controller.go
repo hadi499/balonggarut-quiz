@@ -55,8 +55,6 @@ func handleFailedLogin(username string) {
 	}
 }
 
-
-
 func Register(c *gin.Context) {
 	var input struct {
 		Username string `json:"username" binding:"required"`
