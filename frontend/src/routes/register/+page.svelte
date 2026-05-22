@@ -8,6 +8,7 @@
   let error = $state("");
   let message = $state("");
   let submitting = $state(false);
+  let showPassword = $state(false);
 
   async function handleSubmit(e: Event) {
     e.preventDefault();
@@ -98,13 +99,36 @@
         for="password"
         class="mb-1 block text-sm font-medium text-slate-300">Password</label
       >
-      <input
-        id="password"
-        type="password"
-        bind:value={form.password}
-        required
-        class="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
-      />
+      <div class="relative">
+        <input
+          id="password"
+          type={showPassword ? 'text' : 'password'}
+          bind:value={form.password}
+          required
+          class="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 pr-10 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+        />
+        <button
+          type="button"
+          onclick={() => (showPassword = !showPassword)}
+          class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-200 transition-colors"
+          aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+        >
+          {#if showPassword}
+            <!-- Eye-off icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+              <line x1="1" y1="1" x2="23" y2="23"/>
+            </svg>
+          {:else}
+            <!-- Eye icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          {/if}
+        </button>
+      </div>
     </div>
 
     <button
