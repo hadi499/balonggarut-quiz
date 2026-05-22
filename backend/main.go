@@ -35,9 +35,9 @@ func main() {
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173", "http://192.168.18.2:5173"}, // Alamat Svelte Anda
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"}, // <-- Ini kunci penyelesaiannya!
+		AllowHeaders:     []string{"Origin", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
+		AllowCredentials: true, // Wajib agar browser mengirim cookie
 		MaxAge:           12 * time.Hour,
 	}))
 

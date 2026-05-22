@@ -15,11 +15,12 @@
     submitting = true;
 
     try {
-      const data = await api.post<{ token: string }>("/api/auth/login", form);
-      auth.login(data.token, form.username, "");
+      // Backend set HttpOnly cookie — tidak ada token di response body
+      await api.post<{ message: string }>("/api/auth/login", form);
 
+      // Ambil info user dari /me (cookie sudah otomatis dikirim browser)
       const me = await api.get<{ username: string; role: string }>("/me");
-      auth.login(data.token, me.username, me.role);
+      auth.login(me.username, me.role);
 
       goto("/");
     } catch (err) {

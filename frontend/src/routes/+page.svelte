@@ -14,22 +14,11 @@
 
   let quizzes = $state<Quiz[]>([]);
   let loading = $state(true);
-  let user = $state<{ username: string; role: string } | null>(null);
 
   onMount(async () => {
     try {
       quizzes = (await api.get<Quiz[]>("/api/quizzes")) || [];
     } catch {}
-
-    if (auth.isLoggedIn) {
-      try {
-        const data = await api.get<{ username: string; role: string }>("/me");
-        user = data;
-        auth.login(auth.token!, data.username, data.role);
-      } catch {
-        auth.logout();
-      }
-    }
 
     loading = false;
   });
@@ -78,7 +67,7 @@
               href="/quizzes"
               class="rounded-full bg-indigo-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-indigo-500/30 hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 transition-all hover:scale-105 hover:shadow-indigo-500/50"
             >
-              Lanjut Belajar, {user?.username}
+              Lanjut Belajar, {auth.username}
             </a>
           {:else if !loading}
             <a

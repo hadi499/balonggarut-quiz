@@ -10,6 +10,7 @@ import (
 func SetupRoutes(r *gin.Engine) {
 	r.POST("/api/auth/register", controllers.Register)
 	r.POST("/api/auth/login", controllers.Login)
+	r.GET("/api/auth/session", controllers.Session) // Selalu 200, untuk cek sesi di frontend
 	r.GET("/api/quizzes", controllers.GetQuizzes)
 	r.GET("/api/quizzes/:id", controllers.GetQuiz)
 	r.GET("/api/questions", controllers.GetQuestions)

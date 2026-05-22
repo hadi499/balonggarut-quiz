@@ -183,10 +183,11 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Login successful",
-		"token":   tokenString,
-	})
+	// Set JWT sebagai HttpOnly cookie (tidak bisa diakses JS → aman dari XSS)
+	c.SetSameSite(http.SameSiteStrictMode)
+	c.SetCookie("auth_token", tokenString, 86400, "/", "", false, true)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
 }
 
 func Me(c *gin.Context) {
@@ -199,21 +200,48 @@ func Me(c *gin.Context) {
 	})
 }
 
+// Session selalu mengembalikan 200 — tidak pernah 401.
+// Dipakai oleh frontend saat inisialisasi untuk cek sesi tanpa noise di console.
+func Session(c *gin.Context) {
+	tokenString, err := c.Cookie("auth_token")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"loggedIn": false})
+		return
+	}
+
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return config.JWTKey, nil
+	})
+
+	if err != nil || !token.Valid {
+		c.JSON(http.StatusOK, gin.H{"loggedIn": false})
+		return
+	}
+
+	// Cek blacklist
+	hash := sha256.Sum256([]byte(tokenString))
+	tokenHash := hex.EncodeToString(hash[:])
+	var blacklisted models.BlacklistedToken
+	if err := database.DB.Where("token_hash = ?", tokenHash).First(&blacklisted).Error; err == nil {
+		c.JSON(http.StatusOK, gin.H{"loggedIn": false})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"loggedIn": true,
+		"username": claims.Username,
+		"role":     claims.Role,
+	})
+}
+
 func Logout(c *gin.Context) {
 
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Authorization header is missing"})
+	tokenString, err := c.Cookie("auth_token")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Auth cookie tidak ditemukan"})
 		return
 	}
-
-	parts := strings.Split(authHeader, " ")
-	if len(parts) != 2 || parts[0] != "Bearer" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid authorization format"})
-		return
-	}
-
-	tokenString := parts[1]
 
 	claims := &Claims{}
 	parsedToken, _ := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
@@ -236,6 +264,10 @@ func Logout(c *gin.Context) {
 	}
 
 	database.DB.Create(&blacklisted)
+
+	// Hapus cookie dari browser
+	c.SetSameSite(http.SameSiteStrictMode)
+	c.SetCookie("auth_token", "", -1, "/", "", false, true)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Logout successful"})
 }

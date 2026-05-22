@@ -2,26 +2,26 @@
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem("token");
   const headers: HeadersInit = {
     "Content-Type": "application/json",
     ...(options.headers || {}),
   };
-  if (token) {
-    (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
-  }
 
   const res = await fetch(`${BASE_URL}${url}`, {
     ...options,
     headers,
+    credentials: "include", // Wajib agar browser mengirim HttpOnly cookie ke backend
   });
 
   const data = await res.json();
   if (!res.ok) {
-    // Jika token expired / tidak valid, logout otomatis di semua halaman
+    // Auto-logout hanya jika init() sudah selesai — mencegah race condition di mana
+    // /me dari init() yang gagal (belum login) menimpa state yang baru di-set login()
     if (res.status === 401) {
       const { auth } = await import("$lib/stores/auth.svelte");
-      auth.logout();
+      if (auth.initialized) {
+        auth.logout();
+      }
     }
     throw new Error(data.error || "Something went wrong");
   }

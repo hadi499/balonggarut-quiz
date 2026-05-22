@@ -3,9 +3,13 @@
   import "../app.css";
   import Navbar from "$lib/components/Navbar.svelte";
   import { auth } from "$lib/stores/auth.svelte";
+  import { onMount } from "svelte";
 
   let { children } = $props();
-  auth.init();
+
+  onMount(() => {
+    auth.init();
+  });
 </script>
 
 <svelte:head>
